@@ -12,6 +12,32 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
     
+//    NSImage* image = [[NSImage alloc] initWithSize:NSMakeSize(800, 400)];
+    
+    NSBitmapImageRep* imagerep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+       pixelsWide:800
+       pixelsHigh:400
+       bitsPerSample:16 //8     // 1, 2, 4, 8, 12, or 16.
+       samplesPerPixel:3
+       hasAlpha:NO
+       isPlanar:NO
+       colorSpaceName:NSCalibratedRGBColorSpace
+       bitmapFormat:0 //NSFloatingPointSamplesBitmapFormat //NSAlphaFirstBitmapFormat
+       bytesPerRow:0    // 0 = don't care  800 * 4
+       bitsPerPixel:64 ];
+ 
+    
+    /* valid
+      8, 3, 0 , 32
+     16, 3, 0 , 64
+     16, 3, NSFloatingPointSamplesBitmapFormat, 64
+     */
+    
+//    [imagerep lockFocus];
+    NSGraphicsContext *g = [NSGraphicsContext graphicsContextWithBitmapImageRep:imagerep];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:g];
+    
     // erase the background
     [[NSColor colorWithCalibratedRed:0.1 green:0.2 blue:0.3 alpha:1.0] set];
     [NSBezierPath fillRect:dirtyRect];
@@ -51,6 +77,13 @@
     // 50% black over 100% white
     [[NSColor colorWithCalibratedRed:0.0 green:0.0 blue:0.0 alpha:0.5] set];
     [NSBezierPath fillRect:NSMakeRect(240, 20, 60, 60)];
+    
+    [NSGraphicsContext restoreGraphicsState];
+    
+//    [image unlockFocus];
+ //   [image drawAtPoint:NSMakePoint(0, 0) fromRect:NSMakeRect(0, 0, 400, 800) operation:NSCompositingOperationCopy fraction:1.0 ];
+    
+    [imagerep drawAtPoint:NSMakePoint(0, 0)];
 }
 
 @end
