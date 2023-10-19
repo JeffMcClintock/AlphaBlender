@@ -31,14 +31,6 @@
     NSSize logicalsize = self.frame.size;
     NSSize pysicalsize = [self convertRectToBacking:[self bounds]].size;
     
-//    CGColorSpaceRef wideGamutColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
-
-    // Create a wide gamut NSColorSpace
-    NSColorSpaceRef wideGamutColorSpace = [NSColorSpace extendedSRGBColorSpace];
-
-    // Use the wide gamut color space for further operations
-
-    
 #if 1
     // 16 bits per component
     NSBitmapImageRep* imagerep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
@@ -48,7 +40,7 @@
        samplesPerPixel:3
        hasAlpha:NO
        isPlanar:NO
-       colorSpaceName: wideGamutColorSpace // NSCalibratedRGBColorSpace
+       colorSpaceName: NSColorSpaceNameGenericRGBLinear // NSCalibratedRGBColorSpace
        bitmapFormat: NSBitmapFormatFloatingPointSamples //NSAlphaFirstBitmapFormat
        bytesPerRow:0    // 0 = don't care  800 * 4
        bitsPerPixel:64 ];
@@ -66,8 +58,6 @@
        bytesPerRow:0    // 0 = don't care  800 * 4
        bitsPerPixel:32 ];
 #endif
-    
-    CGColorSpaceRelease(wideGamutColorSpace);
     
     [imagerep setSize: logicalsize]; // Communicates DPI
     
