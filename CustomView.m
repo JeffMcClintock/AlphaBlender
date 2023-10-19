@@ -31,6 +31,7 @@
     NSSize logicalsize = self.frame.size;
     NSSize pysicalsize = [self convertRectToBacking:[self bounds]].size;
     
+#if 0
 #if 1
     // 16 bits per component
     NSBitmapImageRep* imagerep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
@@ -40,7 +41,7 @@
        samplesPerPixel:3
        hasAlpha:NO
        isPlanar:NO
-       colorSpaceName: NSColorSpaceNameGenericRGBLinear // NSCalibratedRGBColorSpace
+       colorSpaceName: NSCalibratedRGBColorSpace
        bitmapFormat: NSBitmapFormatFloatingPointSamples //NSAlphaFirstBitmapFormat
        bytesPerRow:0    // 0 = don't care  800 * 4
        bitsPerPixel:64 ];
@@ -57,6 +58,66 @@
        bitmapFormat: 0 //NSBitmapFormatFloatingPointSamples //NSAlphaFirstBitmapFormat
        bytesPerRow:0    // 0 = don't care  800 * 4
        bitsPerPixel:32 ];
+#endif
+    
+#else
+#if 0
+    // Set the number of components per pixel
+    size_t numComponents = 4; // RGBA
+
+    // Set the number of bytes per component
+    size_t bytesPerComponent = 2; // 16 bits
+
+    // Calculate the bytes per row
+    size_t bytesPerRow = logicalsize.width * numComponents * bytesPerComponent;
+
+    // Allocate memory for the bitmap
+    uint16_t *data = (uint16_t *)calloc(logicalsize.width * logicalsize.height * numComponents, bytesPerComponent);
+
+    // Create the color space
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGBLinear);//kCGColorSpaceExtendedLinearDisplayP3);
+
+    // Create the bitmap context with 16-bit per pixel values
+    CGContextRef context = CGBitmapContextCreate(data, logicalsize.width, logicalsize.height, bytesPerComponent * 8, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder16Host |kCGBitmapFloatComponents);
+
+    // Create a CGImageRef from the bitmap context
+    CGImageRef cgImage = CGBitmapContextCreateImage(context);
+
+    // Convert the CGImageRef to an NSBitmapImageRep
+    NSBitmapImageRep *imagerep = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+
+//    [imagerep setColorSpaceName:    ];
+    // Convert the CGColorSpaceRef to an NSColorSpace
+    NSColorSpace *linearRGBColorSpace = [[NSColorSpace alloc] initWithCGColorSpace:colorSpace];
+#endif
+    // Create the color space
+    // kCGColorSpaceGenericRGBLinear - middle gray is darker, blend seems correct.
+    // kCGColorSpaceExtendedLinearSRGB, kCGColorSpaceLinearDisplayP3 - same
+    // kCGColorSpaceGenericRGB - actually sRGB
+    
+    // kCGColorSpaceExtendedLinearSRGB might be best since float color values should match SE's linear RGB
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
+    
+    NSColorSpace *linearRGBColorSpace = [[NSColorSpace alloc] initWithCGColorSpace:colorSpace];
+
+    NSBitmapImageRep* imagerep1 = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+       pixelsWide:pysicalsize.width
+       pixelsHigh:pysicalsize.height
+       bitsPerSample:16 //8     // 1, 2, 4, 8, 12, or 16.
+       samplesPerPixel:3
+       hasAlpha:NO
+       isPlanar:NO
+       colorSpaceName: NSCalibratedRGBColorSpace // makes no difference if we retag it later anyhow.
+       bitmapFormat: NSBitmapFormatFloatingPointSamples //NSAlphaFirstBitmapFormat
+       bytesPerRow:0    // 0 = don't care  800 * 4
+       bitsPerPixel:64 ];
+    
+    NSBitmapImageRep* imagerep = [imagerep1 bitmapImageRepByRetaggingWithColorSpace:linearRGBColorSpace];
+    
+    // Release the resources
+//    CGContextRelease(context);
+    CGColorSpaceRelease(colorSpace);
+//    CGImageRelease(cgImage);
 #endif
     
     [imagerep setSize: logicalsize]; // Communicates DPI
@@ -101,7 +162,10 @@
     }
 
     // 50% gray
-    [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1.0] set];
+    // colorWithCalibratedRed can't do extend-range
+    // colorWithRed expects extended sRGB
+    double midGrey = 0.737;
+    [[NSColor colorWithRed:midGrey green:midGrey blue:midGrey alpha:1.0] set];
     [NSBezierPath fillRect:NSMakeRect(120, 20, 60, 60)];
 
     // 50% white over 100% black
